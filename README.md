@@ -35,14 +35,15 @@ Local data is stored at `data/chat-store.json`.
 
 ## Free hosting path
 
-1. Create a GitHub repository and push this project.
+1. Push this repo to GitHub.
 2. Create a free Upstash Redis database.
-3. Deploy the Node app on Render's free web service tier from the GitHub repo.
+3. Create a free Render web service from this GitHub repo.
 4. Add these Render environment variables:
    - `CHAT_MASTER_KEY`: long random secret.
    - `UPSTASH_REDIS_REST_URL`: from Upstash.
    - `UPSTASH_REDIS_REST_TOKEN`: from Upstash.
    - `NODE_VERSION`: `22`.
-5. In GitHub, add `RENDER_DEPLOY_HOOK_URL` as a repository secret if you want GitHub Actions to trigger Render deploys after tests pass.
+5. In GitHub repository settings, add `RENDER_DEPLOY_HOOK_URL` as a secret.
+6. In Render, copy the deploy hook URL into that GitHub secret.
 
-The included workflow runs tests on pushes to `main` and triggers Render when the deploy hook secret is present.
+The included workflow runs tests on pushes to `main` and triggers Render when the deploy hook secret is present. The `render.yaml` file in the repo defines the free web service settings.
