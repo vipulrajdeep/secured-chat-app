@@ -12,6 +12,7 @@ const elements = {
   conversationForm: document.querySelector("#conversationForm"),
   participants: document.querySelector("#participants"),
   conversationName: document.querySelector("#conversationName"),
+  logoutButton: document.querySelector("#logoutButton"),
   conversationList: document.querySelector("#conversationList"),
   chatTitle: document.querySelector("#chatTitle"),
   chatMeta: document.querySelector("#chatMeta"),
@@ -49,9 +50,19 @@ function setStatus(online) {
   elements.status.classList.toggle("online", online);
 }
 
+function syncSession() {
+  if (state.username) {
+    sessionStorage.setItem("secureChatUsername", state.username);
+    elements.logoutButton.hidden = false;
+  } else {
+    sessionStorage.removeItem("secureChatUsername");
+    elements.logoutButton.hidden = true;
+  }
+}
+
 function conversationTitle(conversation) {
   if (conversation.name) return conversation.name;
-  return conversation.participants.filter((name) => name !== state.username).join(", ");
+  return ((conversation.participants || [])).filter((name) => name !== state.username).join(", ");
 }
 
 function renderConversations() {
@@ -64,12 +75,16 @@ function renderConversations() {
     return;
   }
 
-  elements.conversationList.innerHTML = state.conversations.map((conversation) => `
+  elements.conversationList.innerHTML = state.conversations.map((conversation) => {
+    const participants = Array.isArray(conversation.participants) ? conversation.participants : [];
+    const title = conversationTitle({ ...conversation, participants });
+    return `
     <button class="conversation ${conversation.id === state.activeConversationId ? "active" : ""}" data-id="${conversation.id}">
-      <strong>${escapeHtml(conversationTitle(conversation))}</strong>
-      <span>${escapeHtml(conversation.participants.join(", "))}</span>
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(participants.join(", "))}</span>
     </button>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function renderMessages(messages = []) {
@@ -111,8 +126,9 @@ async function loadMessages() {
     return;
   }
   const data = await api(`/api/conversations/${state.activeConversationId}/messages?username=${encodeURIComponent(state.username)}`);
-  elements.chatTitle.textContent = conversationTitle(data.conversation);
-  elements.chatMeta.textContent = data.conversation.participants.join(", ");
+  const conversation = { ...data.conversation, participants: Array.isArray(data.conversation && data.conversation.participants) ? data.conversation.participants : [] };
+  elements.chatTitle.textContent = conversationTitle(conversation);
+  elements.chatMeta.textContent = conversation.participants.join(", ");
   renderMessages(data.messages);
 }
 
@@ -145,14 +161,37 @@ function connectEvents() {
   state.poll = setInterval(refresh, 15000);
 }
 
+function logout() {
+  state.username = "";
+  state.conversations = [];
+  state.activeConversationId = "";
+  elements.username.value = "";
+  elements.participants.value = "";
+  elements.conversationName.value = "";
+  elements.messageText.value = "";
+  if (state.events) state.events.close();
+  if (state.poll) clearInterval(state.poll);
+  state.events = null;
+  state.poll = null;
+  setStatus(false);
+  syncSession();
+  renderConversations();
+  renderMessages();
+  elements.chatTitle.textContent = "Choose or start a conversation";
+  elements.chatMeta.textContent = "Messages are encrypted before storage.";
+}
+
 elements.identityForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = elements.username.value.trim();
   if (!username) return;
   state.username = username;
+  syncSession();
   connectEvents();
   await refresh();
 });
+
+elements.logoutButton.addEventListener("click", logout);
 
 elements.conversationForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -196,3 +235,12 @@ elements.messageForm.addEventListener("submit", async (event) => {
 
 renderConversations();
 renderMessages();
+
+const rememberedUsername = sessionStorage.getItem("secureChatUsername");
+if (rememberedUsername) {
+  elements.username.value = rememberedUsername;
+  state.username = rememberedUsername;
+  syncSession();
+  connectEvents();
+  refresh();
+}

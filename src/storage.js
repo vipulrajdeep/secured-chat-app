@@ -15,9 +15,17 @@ export class FileStore {
     try {
       const raw = await fs.readFile(this.filePath, "utf8");
       const parsed = JSON.parse(raw);
+      const conversations = Array.isArray(parsed.conversations) ? parsed.conversations : [];
+      const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
       return {
-        conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
-        messages: Array.isArray(parsed.messages) ? parsed.messages : []
+        conversations: conversations.map((conversation) => ({
+          ...conversation,
+          participants: Array.isArray(conversation.participants) ? conversation.participants : []
+        })),
+        messages: messages.map((message) => ({
+          ...message,
+          recipients: Array.isArray(message.recipients) ? message.recipients : []
+        }))
       };
     } catch (error) {
       if (error.code === "ENOENT") return structuredClone(EMPTY_STORE);

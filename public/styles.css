@@ -124,6 +124,14 @@ label {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.logout {
+  background: #475467;
+}
+
+.logout:hover {
+  background: #344054;
+}
+
 .composer-panel {
   border-top: 1px solid var(--line);
   display: grid;

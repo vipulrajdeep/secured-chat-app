@@ -7,6 +7,17 @@ export function getEncryptionKey(secret = process.env.CHAT_MASTER_KEY) {
   return crypto.createHash("sha256").update(material).digest();
 }
 
+export function buildMessageAad({ conversationId, sender, participants }) {
+  const roster = [...new Set((participants || []).map((value) => String(value).trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b)
+  );
+  return JSON.stringify({
+    conversationId: String(conversationId || ""),
+    sender: String(sender || ""),
+    participants: roster
+  });
+}
+
 export function encryptMessage(plainText, key, aad = "") {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);

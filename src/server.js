@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import { createStore } from "./storage.js";
-import { decryptMessage, encryptMessage, getEncryptionKey } from "./crypto.js";
+import { buildMessageAad, decryptMessage, encryptMessage, getEncryptionKey } from "./crypto.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
@@ -70,7 +70,7 @@ function canReadMessage(message, username) {
 
 function decryptForUser(message, username) {
   if (!canReadMessage(message, username)) return null;
-  const text = decryptMessage(message.encrypted, encryptionKey, message.conversationId);
+  const text = decryptMessage(message.encrypted, encryptionKey, message.aad);
   return {
     id: message.id,
     conversationId: message.conversationId,
@@ -121,7 +121,7 @@ async function handleApi(req, res, url) {
 
     const data = await store.read();
     const conversations = data.conversations
-      .filter((conversation) => conversation.participants.includes(username))
+      .filter((conversation) => Array.isArray(conversation.participants) && conversation.participants.includes(username))
       .sort((a, b) => (b.lastMessageAt || b.createdAt).localeCompare(a.lastMessageAt || a.createdAt))
       .map(safeConversation);
     return sendJson(res, 200, { conversations });
@@ -130,7 +130,7 @@ async function handleApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/conversations") {
     const body = await readBody(req);
     const username = normalizeUsername(body.username);
-    const participants = normalizeParticipants([username, ...(body.participants || [])]);
+    const participants = normalizeParticipants([username, ...(Array.isArray(body.participants) ? body.participants : [])]);
     if (!username) return sendError(res, 400, "Username is required.");
     if (participants.length < 2) return sendError(res, 400, "Add at least one recipient.");
 
@@ -138,6 +138,7 @@ async function handleApi(req, res, url) {
     const data = await store.read();
     const existing = data.conversations.find(
       (conversation) =>
+        Array.isArray(conversation.participants) &&
         conversation.participants.length === participants.length &&
         conversation.participants.every((participant, index) => participant === participants[index])
     );
@@ -168,7 +169,7 @@ async function handleApi(req, res, url) {
     const data = await store.read();
     const conversation = data.conversations.find((item) => item.id === conversationId);
     if (!conversation) return sendError(res, 404, "Conversation not found.");
-    if (!conversation.participants.includes(username)) return sendError(res, 403, "You are not a participant.");
+    if (!Array.isArray(conversation.participants) || !conversation.participants.includes(username)) return sendError(res, 403, "You are not a participant.");
 
     const messages = data.messages
       .filter((message) => message.conversationId === conversationId)
@@ -189,15 +190,21 @@ async function handleApi(req, res, url) {
     const data = await store.read();
     const conversation = data.conversations.find((item) => item.id === conversationId);
     if (!conversation) return sendError(res, 404, "Conversation not found.");
-    if (!conversation.participants.includes(username)) return sendError(res, 403, "You are not a participant.");
+    if (!Array.isArray(conversation.participants) || !conversation.participants.includes(username)) return sendError(res, 403, "You are not a participant.");
 
     const now = new Date().toISOString();
+    const aad = buildMessageAad({
+      conversationId,
+      sender: username,
+      participants: conversation.participants
+    });
     const message = {
       id: crypto.randomUUID(),
       conversationId,
       sender: username,
       recipients: conversation.participants,
-      encrypted: encryptMessage(text, encryptionKey, conversationId),
+      aad,
+      encrypted: encryptMessage(text, encryptionKey, aad),
       createdAt: now
     };
     data.messages.push(message);
