@@ -13,6 +13,7 @@ const elements = {
   participants: document.querySelector("#participants"),
   conversationName: document.querySelector("#conversationName"),
   logoutButton: document.querySelector("#logoutButton"),
+  sessionChip: document.querySelector("#sessionChip"),
   conversationList: document.querySelector("#conversationList"),
   chatTitle: document.querySelector("#chatTitle"),
   chatMeta: document.querySelector("#chatMeta"),
@@ -54,9 +55,15 @@ function syncSession() {
   if (state.username) {
     sessionStorage.setItem("secureChatUsername", state.username);
     elements.logoutButton.hidden = false;
+    elements.sessionChip.hidden = false;
+    elements.sessionChip.textContent = `Signed in as ${state.username}`;
+    elements.identityForm.dataset.state = "signed-in";
   } else {
     sessionStorage.removeItem("secureChatUsername");
     elements.logoutButton.hidden = true;
+    elements.sessionChip.hidden = true;
+    elements.sessionChip.textContent = "";
+    elements.identityForm.dataset.state = "signed-out";
   }
 }
 
@@ -184,8 +191,9 @@ function logout() {
 elements.identityForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = elements.username.value.trim();
-  if (!username) return;
+  if (!username) return showError("Enter a username first.");
   state.username = username;
+  elements.username.value = username;
   syncSession();
   connectEvents();
   await refresh();
@@ -235,6 +243,7 @@ elements.messageForm.addEventListener("submit", async (event) => {
 
 renderConversations();
 renderMessages();
+syncSession();
 
 const rememberedUsername = sessionStorage.getItem("secureChatUsername");
 if (rememberedUsername) {

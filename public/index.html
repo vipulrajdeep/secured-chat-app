@@ -20,10 +20,12 @@
         <form class="identity" id="identityForm">
           <label for="username">Username</label>
           <div class="inline">
-            <input id="username" name="username" autocomplete="off" maxlength="40" placeholder="e.g. raj">
-            <button type="submit">Use</button>
+            <input id="username" name="username" autocomplete="off" maxlength="40" placeholder="e.g. raj" required autofocus>
+            <button type="submit">Login</button>
           </div>
         </form>
+
+        <div class="session-chip" id="sessionChip" hidden></div>
 
         <button class="logout" id="logoutButton" type="button" hidden>Logout</button>
 

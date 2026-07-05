@@ -124,6 +124,29 @@ label {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.identity[data-state="signed-in"] .inline input {
+  border-color: #88d4c3;
+  background: #f5fbf9;
+}
+
+.identity[data-state="signed-in"] .inline button {
+  background: #0f766e;
+}
+
+
+.session-chip {
+  align-items: center;
+  background: #e6f4f1;
+  border: 1px solid #b7ddd6;
+  border-radius: 6px;
+  color: #0f766e;
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
 .logout {
   background: #475467;
 }
