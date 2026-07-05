@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Secure Chat</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">S</div>
+          <div>
+            <h1>Secure Chat</h1>
+            <p>Encrypted server-side history</p>
+          </div>
+        </div>
+
+        <form class="identity" id="identityForm">
+          <label for="username">Username</label>
+          <div class="inline">
+            <input id="username" name="username" autocomplete="off" maxlength="40" placeholder="e.g. raj">
+            <button type="submit">Use</button>
+          </div>
+        </form>
+
+        <form class="composer-panel" id="conversationForm">
+          <label for="participants">Start chat</label>
+          <textarea id="participants" rows="3" placeholder="Recipient usernames, comma-separated"></textarea>
+          <input id="conversationName" maxlength="80" placeholder="Group name, optional">
+          <button type="submit">New conversation</button>
+        </form>
+
+        <div class="conversation-list" id="conversationList" aria-live="polite"></div>
+      </aside>
+
+      <section class="chat">
+        <header class="chat-header">
+          <div>
+            <h2 id="chatTitle">Choose or start a conversation</h2>
+            <p id="chatMeta">Messages are encrypted before storage.</p>
+          </div>
+          <span id="status" class="status">Offline</span>
+        </header>
+
+        <div class="messages" id="messages"></div>
+
+        <form class="message-form" id="messageForm">
+          <textarea id="messageText" rows="2" placeholder="Write a message" maxlength="4000"></textarea>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

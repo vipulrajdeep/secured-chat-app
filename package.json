@@ -1,0 +1,15 @@
+{
+  "name": "secured-chat-app",
+  "version": "1.0.0",
+  "description": "A lightweight encrypted chat app with username-only access.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
